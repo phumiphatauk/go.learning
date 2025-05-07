@@ -1,0 +1,1 @@
+This project is intended to teach and explore the fundamentals of Golang. 🐀
