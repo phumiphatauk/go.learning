@@ -2,3 +2,10 @@ server:
   port: 8080
   user: admin
   password: 1234
+databasepostgres:
+  host: localhost
+  port: 5432
+  dbname: learning
+  username: postgres
+  password: JZVdfKrmEltrZmwCpSVQ
+  sslmode: disable

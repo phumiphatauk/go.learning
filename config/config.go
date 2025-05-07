@@ -8,13 +8,24 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
+	Server           ServerConfig     `mapstructure:"server"`
+	Databasepostgres Databasepostgres `mapstructure:"databasepostgres"`
 }
 
 type ServerConfig struct {
 	Port     uint   `mapstructure:"port"`
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
+}
+
+type Databasepostgres struct {
+	Host     string `mapstructure:"host"`
+	Port     uint   `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
+	Appname  string `mapstructure:"appname"`
 }
 
 func LoadConfig() (config Config, err error) {
