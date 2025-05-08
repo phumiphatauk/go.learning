@@ -67,9 +67,12 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
 
 	// User routes
 	e.POST("/register", userHandler.Register)
-	e.GET("/user/:id", middlewares.TokenAuthMiddleware(userHandler.Get, cfg.JWT.SecretKey))
-	e.PUT("/user", middlewares.TokenAuthMiddleware(userHandler.Update, cfg.JWT.SecretKey))
-	e.DELETE("/user/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, cfg.JWT.SecretKey))
+
+	user_routes := e.Group("/user")
+
+	user_routes.GET("/:id", middlewares.TokenAuthMiddleware(userHandler.Get, cfg.JWT.SecretKey))
+	user_routes.PUT("", middlewares.TokenAuthMiddleware(userHandler.Update, cfg.JWT.SecretKey))
+	user_routes.DELETE("/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, cfg.JWT.SecretKey))
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
