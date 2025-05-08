@@ -14,9 +14,7 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port     uint   `mapstructure:"port"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
+	Port uint `mapstructure:"port"`
 }
 
 type Databasepostgres struct {
@@ -49,9 +47,7 @@ func LoadConfig() (config Config, err error) {
 	viper.Unmarshal(&c)
 
 	c.Server = ServerConfig{
-		Port:     getEnvInteger("server.port", c.Server.Port),
-		User:     getEnv("server.user", c.Server.User),
-		Password: getEnv("server.password", c.Server.Password),
+		Port: getEnvInteger("server.port", c.Server.Port),
 	}
 
 	c.Databasepostgres = Databasepostgres{
