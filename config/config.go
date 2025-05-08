@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Server           ServerConfig     `mapstructure:"server"`
 	Databasepostgres Databasepostgres `mapstructure:"databasepostgres"`
+	JWT              JWT              `mapstructure:"jwt"`
 }
 
 type ServerConfig struct {
@@ -26,6 +27,10 @@ type Databasepostgres struct {
 	DBName   string `mapstructure:"dbname"`
 	SSLMode  string `mapstructure:"sslmode"`
 	Appname  string `mapstructure:"appname"`
+}
+
+type JWT struct {
+	SecretKey string `mapstructure:"secretkey"`
 }
 
 func LoadConfig() (config Config, err error) {
@@ -47,6 +52,20 @@ func LoadConfig() (config Config, err error) {
 		Port:     getEnvInteger("server.port", c.Server.Port),
 		User:     getEnv("server.user", c.Server.User),
 		Password: getEnv("server.password", c.Server.Password),
+	}
+
+	c.Databasepostgres = Databasepostgres{
+		Host:     getEnv("databasepostgres.host", c.Databasepostgres.Host),
+		Port:     getEnvInteger("databasepostgres.port", c.Databasepostgres.Port),
+		Username: getEnv("databasepostgres.username", c.Databasepostgres.Username),
+		Password: getEnv("databasepostgres.password", c.Databasepostgres.Password),
+		DBName:   getEnv("databasepostgres.dbname", c.Databasepostgres.DBName),
+		SSLMode:  getEnv("databasepostgres.sslmode", c.Databasepostgres.SSLMode),
+		Appname:  getEnv("databasepostgres.appname", c.Databasepostgres.Appname),
+	}
+
+	c.JWT = JWT{
+		SecretKey: getEnv("jwt.secretkey", c.JWT.SecretKey),
 	}
 
 	fmt.Printf("Port after %d\n", c.Server.Port)

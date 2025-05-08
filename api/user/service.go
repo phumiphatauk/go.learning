@@ -1,6 +1,9 @@
 package user
 
-import "go.learning/models"
+import (
+	"go.learning/models"
+	"go.learning/utils"
+)
 
 type service struct {
 	Repository
@@ -18,17 +21,24 @@ func NewService(repository Repository) Service {
 }
 
 func (s service) CreateUser(user CreateUser) error {
+
+	// Generate a hashed password
+	hashedPassword, err := utils.GenerateHashedPassword(user.Password)
+	if err != nil {
+		return err
+	}
+
 	// Convert user to models.User
 	newUser := &models.User{
 		Email:          user.Email,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
-		HashedPassword: user.Password, // Hash the password here
+		HashedPassword: hashedPassword,
 		Active:         true,
 	}
 
 	// Call the repository to create the user
-	err := s.Repository.CreateUser(newUser)
+	err = s.Repository.CreateUser(newUser)
 	if err != nil {
 		return err
 	}

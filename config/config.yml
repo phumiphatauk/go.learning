@@ -9,3 +9,5 @@ databasepostgres:
   username: postgres
   password: JZVdfKrmEltrZmwCpSVQ
   sslmode: disable
+jwt:
+  secretkey: example_jwt_secret_key

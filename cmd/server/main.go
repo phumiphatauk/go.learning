@@ -9,9 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"go.learning/api/auth"
+	"go.learning/api/user"
 	"go.learning/config"
 	"go.learning/models"
-	"go.learning/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -54,7 +55,18 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
 	userRepository := user.NewRepository(dbPG)
 	userService := user.NewService(userRepository)
 	userHandler := user.NewHandler(userService)
+
+	authService := auth.NewService(userRepository, cfg)
+	authHandler := auth.NewHandler(authService)
+
 	e.POST("/register", userHandler.Register)
+
+	// Auth routes
+	e.POST("/login", authHandler.Login)
+	e.POST("/refresh-token", authHandler.RefreshToken)
+	e.POST("/logout", authHandler.Logout)
+
+	// User routes
 	e.GET("/user/:id", userHandler.Get)
 	e.PUT("/user", userHandler.Update)
 	e.DELETE("/user/:id", userHandler.Delete)
