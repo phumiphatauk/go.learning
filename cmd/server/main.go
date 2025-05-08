@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.learning/config"
+	"go.learning/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -30,11 +31,20 @@ func init() {
 
 func main() {
 	e := echo.New()
+
+	// Set up middleware for logging
 	e.Use(middleware.Logger())
+
+	// Set up database connection
 	dbPG := initDBPortgre(conf.Databasepostgres)
 
+	// Automigrate the database
+	migrate(dbPG)
+
+	// Register routes
 	go registerRoutes(e, dbPG, conf)
 
+	// Set up graceful shutdown
 	waitForGracefulShutdown(e)
 }
 
@@ -75,4 +85,12 @@ func waitForGracefulShutdown(e *echo.Echo) {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+}
+
+func migrate(db *gorm.DB) {
+	err := db.AutoMigrate(&models.User{}, &models.Logger{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+	fmt.Println("Database migration completed!")
 }
