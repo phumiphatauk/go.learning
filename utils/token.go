@@ -8,12 +8,13 @@ import (
 )
 
 // GenerateJWT generates a JWT token
-func GenerateJWT(secretKey string, userID string) (string, string, int64, error) {
+func GenerateJWT(secretKey string, sessionId string, userID string) (string, string, int64, error) {
 
 	// Create the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": userID,
-		"exp":    time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"userID":    userID,
+		"sessionId": sessionId,
+		"exp":       time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 	})
 
 	// Sign the token with the secret key
@@ -24,8 +25,9 @@ func GenerateJWT(secretKey string, userID string) (string, string, int64, error)
 
 	// Create a refresh token 7 days from now
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": userID,
-		"exp":    time.Now().Add(time.Hour * 24 * 7).Unix(), // Refresh token expires in 7 days
+		"userID":    userID,
+		"sessionId": sessionId,
+		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(), // Refresh token expires in 7 days
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte(secretKey))
 	if err != nil {

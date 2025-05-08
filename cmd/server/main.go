@@ -20,6 +20,8 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+
+	"github.com/go-redis/redis/v8"
 )
 
 var conf config.Config
@@ -41,23 +43,26 @@ func main() {
 	// Set up database connection
 	dbPG := initDBPortgre(conf.Databasepostgres)
 
+	// Set up Redis connection
+	redisClient := initRedis(conf.Redis)
+
 	// Automigrate the database
 	migrate(dbPG)
 
 	// Register routes
-	go registerRoutes(e, dbPG, conf)
+	go registerRoutes(e, dbPG, redisClient, conf)
 
 	// Set up graceful shutdown
 	waitForGracefulShutdown(e)
 }
 
-func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
+func registerRoutes(e *echo.Echo, dbPG *gorm.DB, redisClient *redis.Client, cfg config.Config) {
 
 	userRepository := user.NewRepository(dbPG)
 	userService := user.NewService(userRepository)
 	userHandler := user.NewHandler(userService)
 
-	authService := auth.NewService(userRepository, cfg)
+	authService := auth.NewService(userRepository, redisClient, cfg)
 	authHandler := auth.NewHandler(authService)
 
 	// Auth routes
@@ -70,9 +75,9 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
 
 	user_routes := e.Group("/user")
 
-	user_routes.GET("/:id", middlewares.TokenAuthMiddleware(userHandler.Get, cfg.JWT.SecretKey))
-	user_routes.PUT("", middlewares.TokenAuthMiddleware(userHandler.Update, cfg.JWT.SecretKey))
-	user_routes.DELETE("/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, cfg.JWT.SecretKey))
+	user_routes.GET("/:id", middlewares.TokenAuthMiddleware(userHandler.Get, redisClient, cfg.JWT.SecretKey))
+	user_routes.PUT("", middlewares.TokenAuthMiddleware(userHandler.Update, redisClient, cfg.JWT.SecretKey))
+	user_routes.DELETE("/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, redisClient, cfg.JWT.SecretKey))
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -97,6 +102,19 @@ func initDBPortgre(c config.Databasepostgres) *gorm.DB {
 	}
 	log.Infof("connected to database Portgre %s:%d", c.Host, c.Port)
 	return db
+}
+
+func initRedis(c config.Redis) *redis.Client {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", c.Host, c.Port),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Panicf("error connecting to Redis: %v", err)
+	}
+	log.Infof("connected to Redis %s:%d", c.Host, c.Port)
+	return redisClient
 }
 
 func waitForGracefulShutdown(e *echo.Echo) {

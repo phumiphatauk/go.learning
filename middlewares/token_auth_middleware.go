@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 )
 
 // Middleware to validate JWT token
-func TokenAuthMiddleware(next echo.HandlerFunc, jwt_secret_key string) echo.HandlerFunc {
+// Middleware to validate JWT token
+func TokenAuthMiddleware(next echo.HandlerFunc, redisClient *redis.Client, jwt_secret_key string) echo.HandlerFunc {
 	var jwtSecretKey = []byte(jwt_secret_key)
 	return func(c echo.Context) error {
 		// Get the token from the Authorization header
@@ -39,9 +41,31 @@ func TokenAuthMiddleware(next echo.HandlerFunc, jwt_secret_key string) echo.Hand
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid or expired token")
 		}
 
-		// Extract claims (if needed)
+		// Extract claims for checking session ID
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			// Retrieve sessionID from claims
+			sessionID, sessionExists := claims["sessionId"].(string)
+			if !sessionExists || sessionID == "" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Session ID is missing from token")
+			}
+
+			// Check sessionID in Redis
+			storedToken, err := redisClient.Get(c.Request().Context(), sessionID).Result()
+			if err == redis.Nil {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Session ID is invalid or expired")
+			} else if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate session ID")
+			}
+
+			// Ensure the token matches the stored token in Redis
+			if storedToken != tokenString {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Token does not match session")
+			}
+
+			// Set userID in the context for later use
 			c.Set("userID", claims["userID"])
+		} else {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Failed to parse token claims")
 		}
 
 		// Continue to the next handler

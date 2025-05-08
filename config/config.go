@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Server           ServerConfig     `mapstructure:"server"`
 	Databasepostgres Databasepostgres `mapstructure:"databasepostgres"`
+	Redis            Redis            `mapstructure:"redis"`
 	JWT              JWT              `mapstructure:"jwt"`
 }
 
@@ -25,6 +26,11 @@ type Databasepostgres struct {
 	DBName   string `mapstructure:"dbname"`
 	SSLMode  string `mapstructure:"sslmode"`
 	Appname  string `mapstructure:"appname"`
+}
+
+type Redis struct {
+	Host string `mapstructure:"host"`
+	Port uint   `mapstructure:"port"`
 }
 
 type JWT struct {

@@ -2,3 +2,6 @@ go.learning
 
 # Database
 /data/db/*
+
+# Redis
+/data/redis/*
