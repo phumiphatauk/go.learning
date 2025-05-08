@@ -11,6 +11,7 @@ import (
 
 	"go.learning/config"
 	"go.learning/models"
+	"go.learning/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -49,6 +50,15 @@ func main() {
 }
 
 func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
+
+	userRepository := user.NewRepository(dbPG)
+	userService := user.NewService(userRepository)
+	userHandler := user.NewHandler(userService)
+	e.POST("/register", userHandler.Register)
+	e.GET("/user/:id", userHandler.Get)
+	e.PUT("/user", userHandler.Update)
+	e.DELETE("/user/:id", userHandler.Delete)
+
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
@@ -58,12 +68,11 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, cfg config.Config) {
 
 func initDBPortgre(c config.Databasepostgres) *gorm.DB {
 	dsn := fmt.Sprintf(
-		"host=%s port=%d dbname=%s user=%s %sword=%s sslmode=%s",
+		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		c.Host,
 		c.Port,
 		c.DBName,
 		c.Username,
-		"pass",
 		c.Password,
 		c.SSLMode,
 	)
