@@ -36,6 +36,14 @@ func init() {
 
 func main() {
 	e := echo.New()
+	// Set Cors origin and methods
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	// Set up middleware for logging
 	e.Use(middleware.Logger())
