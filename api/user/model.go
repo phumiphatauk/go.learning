@@ -1,5 +1,26 @@
 package user
 
+type Pagination struct {
+	Page          int    `query:"page"`
+	Limit         int    `query:"limit"`
+	Sort          string `query:"sort"`
+	SortDirection string `query:"sort_direction"`
+}
+
+type GetUserList struct {
+	Pagination
+	FirstName *string `query:"first_name"`
+}
+
+type PaginationResponse struct {
+	Total int64 `json:"total_count"`
+}
+
+type GetUserListResponse struct {
+	PaginationResponse
+	Data []User `json:"data"`
+}
+
 type CreateUser struct {
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
@@ -22,5 +43,4 @@ type User struct {
 	Active    bool   `json:"active"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
-	DeletedAt string `json:"deleted_at"`
 }

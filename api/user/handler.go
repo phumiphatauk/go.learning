@@ -9,6 +9,7 @@ import (
 
 type Handler interface {
 	Register(c echo.Context) (err error)
+	GetList(c echo.Context) (err error)
 	Get(c echo.Context) (err error)
 	Update(c echo.Context) (err error)
 	Delete(c echo.Context) (err error)
@@ -34,6 +35,39 @@ func (h handler) Register(c echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusCreated, nil)
+}
+
+func (h handler) GetList(c echo.Context) (err error) {
+	var queryParams GetUserList
+	// Bind query parameters to the struct
+	if err = c.Bind(&queryParams); err != nil {
+		return
+	}
+
+	// Validate query parameters
+	if queryParams.Page < 1 {
+		queryParams.Page = 1
+	}
+
+	if queryParams.Limit < 1 {
+		queryParams.Limit = 10
+	}
+
+	if queryParams.Sort == "" {
+		queryParams.Sort = "first_name"
+	}
+
+	if queryParams.SortDirection == "" {
+		queryParams.SortDirection = "asc"
+	}
+
+	// Call the service to get the user list
+	users, err := h.service.GetUserList(queryParams)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Failed to get user list")
+	}
+
+	return c.JSON(http.StatusOK, users)
 }
 
 func (h handler) Get(c echo.Context) (err error) {

@@ -83,6 +83,7 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, redisClient *redis.Client, cfg 
 
 	user_routes := e.Group("/user")
 
+	user_routes.GET("", middlewares.TokenAuthMiddleware(userHandler.GetList, redisClient, cfg.JWT.SecretKey))
 	user_routes.GET("/:id", middlewares.TokenAuthMiddleware(userHandler.Get, redisClient, cfg.JWT.SecretKey))
 	user_routes.PUT("", middlewares.TokenAuthMiddleware(userHandler.Update, redisClient, cfg.JWT.SecretKey))
 	user_routes.DELETE("/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, redisClient, cfg.JWT.SecretKey))

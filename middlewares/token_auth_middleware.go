@@ -10,7 +10,6 @@ import (
 )
 
 // Middleware to validate JWT token
-// Middleware to validate JWT token
 func TokenAuthMiddleware(next echo.HandlerFunc, redisClient *redis.Client, jwt_secret_key string) echo.HandlerFunc {
 	var jwtSecretKey = []byte(jwt_secret_key)
 	return func(c echo.Context) error {

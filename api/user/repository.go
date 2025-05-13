@@ -11,6 +11,7 @@ import (
 
 type Repository interface {
 	CreateUser(user *models.User) error
+	GetUserList(queryParams GetUserList) ([]models.User, int64, error)
 	GetUserByID(id uint) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	UpdateUser(user *models.User) error
@@ -31,6 +32,43 @@ func (r *repository) CreateUser(user *models.User) error {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	return nil
+}
+
+func (r *repository) GetUserList(queryParams GetUserList) ([]models.User, int64, error) {
+	var users []models.User
+	query := r.db.WithContext(context.Background()).Where("deleted_at IS NULL")
+	if queryParams.FirstName != nil {
+		query = query.Where("first_name ILIKE ?", "%"+*queryParams.FirstName+"%")
+	}
+
+	// Count total records
+	var total int64
+	err := query.Model(&models.User{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	// Set sorting and pagination
+	if queryParams.Sort != "" {
+		if queryParams.SortDirection == "desc" {
+			query = query.Order(queryParams.Sort + " DESC")
+		} else {
+			query = query.Order(queryParams.Sort + " ASC")
+		}
+	} else {
+		query = query.Order("first_name ASC")
+	}
+	if queryParams.Page > 0 && queryParams.Limit > 0 {
+		offset := (queryParams.Page - 1) * queryParams.Limit
+		query = query.Offset(offset).Limit(queryParams.Limit)
+	} else {
+		query = query.Limit(10)
+	}
+	err = query.Find(&users).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get user list: %w", err)
+	}
+	return users, total, nil
 }
 
 func (r *repository) GetUserByID(id uint) (*models.User, error) {

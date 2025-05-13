@@ -10,6 +10,7 @@ type service struct {
 }
 
 type Service interface {
+	GetUserList(queryParams GetUserList) (*GetUserListResponse, error)
 	GetUserByID(id uint) (*User, error)
 	CreateUser(user CreateUser) error
 	UpdateUser(user UpdateUser) error
@@ -18,6 +19,37 @@ type Service interface {
 
 func NewService(repository Repository) Service {
 	return service{repository}
+}
+
+func (s service) GetUserList(queryParams GetUserList) (*GetUserListResponse, error) {
+	// Call the repository to get the user list
+	users, total, err := s.Repository.GetUserList(queryParams)
+	if err != nil {
+		return nil, err
+	}
+
+	var userList []User
+	for _, user := range users {
+		userList = append(userList, User{
+			ID:        user.ID,
+			Email:     user.Email,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Active:    user.Active,
+			CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	// Create the response
+	response := &GetUserListResponse{
+		PaginationResponse: PaginationResponse{
+			Total: total,
+		},
+		Data: userList,
+	}
+
+	return response, nil
 }
 
 func (s service) CreateUser(user CreateUser) error {
@@ -62,7 +94,6 @@ func (s service) GetUserByID(id uint) (*User, error) {
 		Active:    user.Active,
 		CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt: user.UpdatedAt.Format("2006-01-02 15:04:05"),
-		DeletedAt: user.DeletedAt.Time.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 
