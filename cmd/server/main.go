@@ -73,6 +73,9 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, redisClient *redis.Client, cfg 
 	authService := auth.NewService(userRepository, redisClient, cfg)
 	authHandler := auth.NewHandler(authService)
 
+	// Middleware
+	tokenAuthMiddleware := middlewares.NewTokenAuthMiddleware(redisClient, cfg.JWT.SecretKey)
+
 	// Auth routes
 	e.POST("/login", authHandler.Login)
 	e.POST("/refresh-token", authHandler.RefreshToken)
@@ -83,10 +86,10 @@ func registerRoutes(e *echo.Echo, dbPG *gorm.DB, redisClient *redis.Client, cfg 
 
 	user_routes := e.Group("/user")
 
-	user_routes.GET("", middlewares.TokenAuthMiddleware(userHandler.GetList, redisClient, cfg.JWT.SecretKey))
-	user_routes.GET("/:id", middlewares.TokenAuthMiddleware(userHandler.Get, redisClient, cfg.JWT.SecretKey))
-	user_routes.PUT("", middlewares.TokenAuthMiddleware(userHandler.Update, redisClient, cfg.JWT.SecretKey))
-	user_routes.DELETE("/:id", middlewares.TokenAuthMiddleware(userHandler.Delete, redisClient, cfg.JWT.SecretKey))
+	user_routes.GET("", userHandler.GetList, tokenAuthMiddleware.TokenAuthMiddleware())
+	user_routes.GET("/:id", userHandler.Get, tokenAuthMiddleware.TokenAuthMiddleware())
+	user_routes.PUT("", userHandler.Update, tokenAuthMiddleware.TokenAuthMiddleware())
+	user_routes.DELETE("/:id", userHandler.Delete, tokenAuthMiddleware.TokenAuthMiddleware())
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
